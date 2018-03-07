@@ -1,0 +1,1127 @@
+{
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "info": {
+    "description": "",
+    "version": "0.0.5",
+    "title": "Auction API for SENG365 2018 Assignments"
+  },
+  "tags": [
+    {
+      "name": "auctions",
+      "description": "All auction-related endpoints"
+    },
+    {
+      "name": "photos",
+      "description": "Manipulation of the photos for an auction"
+    },
+    {
+      "name": "users",
+      "description": "Users of the auction server that can be sellers and buyers"
+    }
+  ],
+  "paths": {
+    "/reset": {
+      "post": {
+        "tags": [
+          "database"
+        ],
+        "summary": "Force reset of database to original structure.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+              "description": "Malformed request.",
+              "content": {
+                "text/plain": {
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+    "/resample": {
+      "post": {
+        "tags": [
+          "database"
+        ],
+        "summary": "Reload sample of data into reset database.",
+        "responses": {
+          "201": {
+            "description": "Sample of data has been reloaded."
+          },
+          "400": {
+            "description": "Malformed request."
+          }
+        }
+      }
+    },
+    "/auctions" : {
+      "get": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "View auctions, sorted from most recent to least recent.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "startIndex",
+            "description": "Number of items to skip before returning result",
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "count",
+            "description": "Number of items to return",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "description": "Search string for auction titles",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category-id",
+            "description" : "ID for the category.",
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "seller",
+            "description": "Only return auctions with this id as a seller",
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "bidder",
+            "description": "Only return auctions which have a bid by this id",
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          },
+          {
+            "in": "query",
+            "name": "winner",
+            "description": "Only return auctions which were won by this id",
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auctionsOverview"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "Create auction",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "title",
+                  "categoryId",
+                  "description",
+                  "startDateTime",
+                  "endDateTime",
+                  "reservePrice",
+                  "startingBid"
+                ],
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/categoryId"
+                  },
+                  {
+                    "$ref": "#/components/schemas/title"
+                  },
+                  {
+                    "$ref": "#/components/schemas/description"
+                  },
+                  {
+                    "$ref": "#/components/schemas/startDateTime"
+                  },
+                  {
+                    "$ref": "#/components/schemas/endDateTime"
+                  },
+                  {
+                    "$ref": "#/components/schemas/reservePrice"
+                  },
+                  {
+                    "$ref": "#/components/schemas/startingBid"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref" : "#/components/schemas/id"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed auction data"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/auctions/{id}": {
+      "get": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "View auction details",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "auction id",
+            "required": true,
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/auctionDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "Change some selected information for an Auction",
+        "description": "Only those properties included in the requestBody are to be changed.",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Id of the auction to update",
+            "required": true,
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/categoryId"
+                  },
+                  {
+                    "$ref": "#/components/schemas/title"
+                  },
+                  {
+                    "$ref": "#/components/schemas/description"
+                  },
+                  {
+                    "$ref": "#/components/schemas/startDateTime"
+                  },
+                  {
+                    "$ref": "#/components/schemas/endDateTime"
+                  },
+                  {
+                    "$ref": "#/components/schemas/reservePrice"
+                  },
+                  {
+                    "$ref": "#/components/schemas/startingBid"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Malformed request."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "403": {
+            "description": "Forbidden - bidding has begun on the auction."
+          },
+          "404": {
+            "description": "Not found."
+          }
+        }
+      }
+    },
+    "/auctions/{id}/bids": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "description": "auction id",
+          "required": true,
+          "schema": {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "View bid history",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/bidHistory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auctions"
+        ],
+        "summary": "Make bid on auction",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "amount",
+            "description": "amount to bid",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/auctions/{id}/photos": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "id",
+          "description": "Id of the auction",
+          "required": true,
+          "schema": {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "photos"
+        ],
+        "summary": "List auction photo URIs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref" : "#/components/schemas/photoUris"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "photos"
+        ],
+        "summary": "Add a photo to an auction",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/auctions/{auction-id}/photos/{photo-id}": {
+      "parameters": [
+        {
+          "in": "path",
+          "name": "auction-id",
+          "description": "Id of the auction",
+          "required": true,
+          "schema": {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        },
+        {
+          "in": "path",
+          "name": "photo-id",
+          "description": "Id of the photo",
+          "required": true,
+          "schema": {
+            "type" : "integer",
+            "minimum" : 0
+          }
+        }
+      ],
+      "get": {
+        "tags": [
+          "photos"
+        ],
+        "summary": "Get auction photo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "photos"
+        ],
+        "summary": "Update auction photo",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "example": "Raw content of PNG image file"
+              }
+            },
+            "image/jpeg": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "example": "Raw content of JPEG image file"
+              }
+            }
+          },
+          "description": "Binary image (e.g., content of png or jpeg image file).",
+          "required": true
+        }
+      },
+      "delete": {
+        "tags": [
+          "photos"
+        ],
+        "summary": "Delete auction photo",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Create user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "username",
+                  "familyName",
+                  "givenName",
+                  "email",
+                  "password"
+                ],
+                "allOf": [
+                  {
+                    "properties" : {
+                      "username" : {
+                        "type" : "string"
+                      },
+                      "givenName" : {
+                        "type" : "string"
+                      },
+                      "familyName" : {
+                        "type" : "string"
+                      }
+                    }
+                  },
+                  {
+                    "$ref": "#/components/schemas/email"
+                  },
+                  {
+                    "$ref": "#/components/schemas/password"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref" : "#/components/schemas/id"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request"
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Log in user by username or email",
+        "description": "One of username and email is required",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "query",
+            "description": "The username for login",
+            "schema": {
+              "type" : "string"
+            }
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "description": "The users email for login",
+            "schema": {
+              "$ref" : "#/components/schemas/email"
+            }
+          },
+          {
+            "name": "password",
+            "in": "query",
+            "description": "The password for login in clear text",
+            "required": true,
+            "schema": {
+              "$ref" : "#/components/schemas/password"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/logInResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid username/email/password supplied"
+          }
+        }
+      }
+    },
+    "/users/logout": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Logs out user session given by auth token in header",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get user by user id",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "description": "Email and accountBalance properties only included if request is for own userid (noted here as OAS lacks a mechanism to describe polymorphic responses.)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/user"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Change some selected information for a user",
+        "description": "Only those properties included in the requestBody are to be changed.",
+        "security": [
+          {
+            "User": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "user id to be updated",
+            "required": true,
+            "schema": {
+              "type" : "integer",
+              "minimum" : 0
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "username": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "givenName": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "familyName": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "$ref": "#/components/schemas/email"
+                  },
+                  {
+                    "$ref": "#/components/schemas/password"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "auctionsOverview": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "title"
+          ],
+          "description": "summary data for an Auction",
+          "allOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "categoryTitle": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "$ref": "#/components/schemas/categoryId"
+            },
+            {
+              "$ref": "#/components/schemas/title"
+            },
+            {
+              "$ref": "#/components/schemas/reservePrice"
+            },
+            {
+              "$ref": "#/components/schemas/startDateTime"
+            },
+            {
+              "$ref": "#/components/schemas/endDateTime"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "currentBid": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "photoUri": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "auctionDetails": {
+        "type": "object",
+        "description": "detailed Auction object",
+        "required": [
+          "id",
+          "creationDateTime",
+          "seller"
+        ],
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/categoryId"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categoryTitle": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/categoryId"
+          },
+          {
+            "$ref": "#/components/schemas/title"
+          },
+          {
+            "$ref": "#/components/schemas/reservePrice"
+          },
+          {
+            "$ref": "#/components/schemas/startDateTime"
+          },
+          {
+            "$ref": "#/components/schemas/endDateTime"
+          },
+          {
+            "$ref": "#/components/schemas/description"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "creationDateTime": {
+                "type": "integer"
+              },
+              "photoUris": {
+                "$ref": "#/components/schemas/photoUris"
+              },
+              "seller": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer"
+                  },
+                  "username": {
+                    "type": "string"
+                  }
+                }
+              },
+              "currentBid": {
+                "type": "integer"
+              },
+              "bids": {
+                "description": "bid history, in datetime order, most recent first",
+                "$ref": "#/components/schemas/bidHistory"
+              }
+            }
+          }
+        ]
+      },
+      "user": {
+        "type": "object",
+        "required": [
+          "username",
+          "familyName",
+          "givenName",
+          "email",
+          "accountBalance"
+        ],
+        "allOf": [
+          {
+            "type": "object",
+            "properties": {
+              "username": {
+                "type": "string"
+              },
+              "givenName": {
+                "type": "string"
+              },
+              "familyName": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "$ref": "#/components/schemas/email"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "accountBalance": {
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      },
+      "logInResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "the id of the logged in user"
+          },
+          "token": {
+            "type": "string",
+            "description": "a token to be used for future calls"
+          }
+        }
+      },
+      "photoUris" : {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "format": "uri"
+        }
+      },
+      "photo": {
+        "type": "object",
+        "required": [
+          "image",
+          "type"
+        ],
+        "properties": {
+          "image": {
+            "type": "string",
+            "format": "binary"
+          },
+          "type": {
+            "type": "string"
+          }
+        }
+      },
+      "bidHistory": {
+        "type": "array",
+        "description": "history of bids on an Auction",
+        "items": {
+          "type" : "object",
+          "required" : [
+            "amount",
+            "datetime",
+            "buyerId",
+            "buyerUsername"
+          ],
+          "properties" : {
+            "amount": {
+              "type": "integer"
+            },
+            "datetime": {
+              "type": "integer"
+            },
+            "buyerId": {
+              "type": "integer"
+            },
+            "buyerUsername": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "id": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "categoryId": {
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "title": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "reservePrice": {
+        "type": "object",
+        "properties": {
+          "reservePrice": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "startDateTime": {
+        "type": "object",
+        "properties": {
+          "startDateTime": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "endDateTime": {
+        "type": "object",
+        "properties": {
+          "endDateTime": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "description": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "startingBid": {
+        "type": "object",
+        "properties": {
+          "startingBid": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "email": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "password": {
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "format": "password"
+          }
+        }
+      }
+
+    },
+    "securitySchemes": {
+      "User": {
+        "type": "apiKey",
+        "name": "X-Authorization",
+        "in": "header"
+      }
+    }
+  }
+}
