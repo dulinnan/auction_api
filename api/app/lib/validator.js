@@ -8,7 +8,7 @@
 
 const
     ZSchema = require('z-schema'),
-    schema = require('../../config/auction_api_0.0.5.json'),
+    schema = require('../../config/auction_api_0.0.7.json'),
     options = {assumeAdditional: true}, // ban additional properties and array items from the schema (no unexpected things)
     schemaValidator = new ZSchema(options),
     parameterValidator = require('swagger-parameters');
@@ -52,7 +52,7 @@ const validateParameters = (actual, schema) => {
  * @param actual        the object to be validated (usually a req.body)
  * @param schemaPath    if supplied, sub-schema to be used for validation (passed directly to ZSchema schemaPath)
  */
-const validateSchema = (actual, schemaPath = 'definitions') => {
+const validateSchema = (actual, schemaPath = 'components') => {
     return schemaValidator.validate(actual, schema,  {schemaPath: schemaPath })
 };
 

@@ -14,8 +14,11 @@ const
 
 const reset = (req, res) => {
   return initDb(config.get('db', true)
-  .then(() => res.sendStatus(201))
-  .catch(() => res.sendStatus(500));
+      .then(() => {
+      return res.sendStatus(201);
+      })
+
+  .catch(() => res.sendStatus(500)));
 };
 
 const resample = (req, res) => {
@@ -28,6 +31,6 @@ const resample = (req, res) => {
 };
 
 module.exports = {
-    reset: reset
+    reset: reset,
     resample: resample
 };

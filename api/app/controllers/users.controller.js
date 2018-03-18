@@ -6,7 +6,7 @@
 
 const
     log = require('../lib/logger')(),
-    schema = require('../../config/auction_api_0.0.5.json'),
+    schema = require('../../config/auction_api_0.0.7.json'),
     config = require('../../config/config'),
     users = require('../models/users.model'),
     validator = require('../lib/validator');
@@ -16,12 +16,14 @@ const
  * create a new user, from a request body that follows the `User` schema definition
  */
 const create = (req, res) => {
-    if (!validator.isValidSchema(req.body, 'definitions.User')) {
+    if (!validator.isValidSchema(req.body, 'components.schemas.user.allOf[0]')) {
         log.warn(`users.controller.create: bad user ${JSON.stringify(req.body)}`);
+        log.warn(validator.getLastErrors());
         return res.sendStatus(400);
     }
     else {
         let user = Object.assign({}, req.body);
+        // console.log(req.body['email']);
         users.insert(user, (err, id) => {
             if (err)
             {
@@ -35,7 +37,7 @@ const create = (req, res) => {
 
 /**
  * return details for the user given by the request param :id
- * (auth required in v2+)
+ * (auth required)
  */
 const read = (req, res) => {
     let id = parseInt(req.params.id);
@@ -62,7 +64,7 @@ const update = (req, res) => {
     users.getIdFromToken(token, (err, _id) => {
         if (_id !== id)
             return res.sendStatus(403);
-        if (!validator.isValidSchema(req.body, 'definitions.User')) {
+        if (!validator.isValidSchema(req.body, 'components.schemas.user.allOf[0]')) {
             log.warn(`users.controller.update: bad user ${JSON.stringify(req.body)}`);
             return res.sendStatus(400);
         }
@@ -70,6 +72,7 @@ const update = (req, res) => {
         users.alter(_id, user, err => {
             if (err)
                 return res.sendStatus(500);
+                // console.log(err);
             return res.sendStatus(200);
         })
     })
@@ -111,6 +114,7 @@ const login = (req, res) => {
  */
 const logout = (req, res) => {
     let token = req.get(config.get('authToken'));
+    // let token = req.headers['x-authorization'];
     users.removeToken(token, err => {
         if (err)
             return res.sendStatus(401);

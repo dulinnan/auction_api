@@ -6,7 +6,7 @@
  * currently just a db reset convenience method (but see /status in the main app module)
  */
 
-const admin = require('../controllers/database.controller');
+const database = require('../controllers/database.controller');
 
 module.exports = (router) => {
 

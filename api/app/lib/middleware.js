@@ -8,18 +8,20 @@ const
     log = require('./logger')(),
     config = require('../../config/config.js'),
     users = require('../models/users.model'),
-    auctions = require('../models/auctions.model'),
-    photos = require('../models/photos.model');
-    bids = require('../models/bids.model');
+    auctions = require('../models/auctions.model');
+    // photos = require('../models/photos.model');
+    // bids = require('../models/bids.model');
+
 
 /**
  * authenticate based on token
  */
  const isAuthenticated = (req, res, next) => {
      let token = req.get(config.get('authToken'));
+     // let token = req.headers['x-authorization'];
      log.debug(`authenticating ${token}`);
-     users.getIdFromToken(token, (err, id) => {
-         if (err || id === null) {
+     users.getIdFromToken(token, (err, user_id) => {
+         if (err || user_id === null) {
              log.warn(`rejected auth attempt for token ${token}`);
              return res.sendStatus(401);
          }
@@ -54,7 +56,7 @@ const isAuctionOwner = (req, res, next) => {
             return res.sendStatus(403);
         }
         auctions.getCreator(parseInt(auctionId), (err, users) => {
-            if (err || ! users.includes(id)) { // err shouldn't happen - an auction without a creator (unless deleted?)
+            if (err || id !== users[0]['auction_userid']) { // err shouldn't happen - an auction without a creator (unless deleted?)
                 log.warn(`rejected attempt to auth ${id} as owner of auction ${auctionId}`);
                 return res.sendStatus(403);
             }
@@ -75,7 +77,7 @@ const isNotAuctionOwner = (req, res, next) => {
             return res.sendStatus(403);
         }
         auctions.getCreator(auctionId, (err, users) => {
-            if (err || users.includes(id)) { // err shouldn't happen - an auction without a creator
+            if (err || id === users[0]['auction_userid']) { // err shouldn't happen - an auction without a creator
                 log.warn(`rejected attempt to auth as ${id} because owner of auction ${auctionId}`);
                 return res.sendStatus(403);
             }
@@ -105,10 +107,33 @@ const isBegun = (req, res, next) => {
     })
 };
 
+
+const isValidAuction = (req, res, next) => {
+    let auctionId = req.params.id;
+    if (!Number.isInteger(parseInt(auctionId))) {
+        log.warn(`rejected attempt to auth ${auctionId} as owner of non-integer ${auctionId}`);
+        return res.sendStatus(403);
+    }
+    auctions.checkValidity(auctionId, (err, result) => {
+        if (err) {
+            log.warn(`couldn't check begun status of auction ${auctionId}: ${err}`);
+            return res.sendStatus(403);
+        }
+        if (result.length === 0) {
+            log.warn(`The auction of id=${auctionId} doesn't exist.`);
+            return res.sendStatus(404);
+        }
+        next()
+
+    })
+};
+
+
 module.exports = {
     isAuthenticated: isAuthenticated,
     isUser: isUser,
     isAuctionOwner: isAuctionOwner,
     isNotAuctionOwner: isNotAuctionOwner,
-    isBegun: isBegun
+    isBegun: isBegun,
+    isValidAuction: isValidAuction,
 };

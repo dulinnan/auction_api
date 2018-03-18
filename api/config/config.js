@@ -44,38 +44,38 @@ let
         },
         sampledata: {
             format: 'Boolean',
-            default: false,
+            default: true,
             arg: 'sampledata',
             env: 'SAMPLE_DATA'
         },
         db: {
             host: { // host, rather than hostname, as mysql connection string uses 'host'
                 format: String,
-                default: 'localhost',
+                default: 'mysql3.csse.canterbury.ac.nz',
                 arg: 'mysql-host',
                 env: 'SENG365_MYSQL_HOST'
             },
             port: {
                 format: 'port',
-                default: 6033,
+                default: 3306,
                 arg: 'mysql-port',
                 env: 'SENG365_MYSQL_PORT'
             },
             user: {
                 format: String,
-                default: 'root',
+                default: 'jbe104',
                 arg: 'mysql-user',
                 env: 'SENG365_MYSQL_USER'
             },
             password: {
                 format: String,
-                default: 'secret',
+                default: '53256818',
                 arg: 'mysql-password',
                 env: 'SENG365_MYSQL_PASSWORD'
             },
             database: {
                 format: String,
-                default: 'mysql',
+                default: 'jbe104',
                 arg: 'mysql-database',
                 env: 'SENG365_MYSQL_DATABASE'
             }
