@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": "https://eng-git.canterbury.ac.nz/jbe104/SENG365_auction_api.git"
+    "url": "https://github.com/dulinnan/auction_api.git"
   },
   "license": "MIT",
   "dependencies": {
